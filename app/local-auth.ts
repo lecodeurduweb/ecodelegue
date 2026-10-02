@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { env } from "cloudflare:workers";
 
 export type LocalUser = {
   userId: string;
@@ -30,7 +29,7 @@ function fromB64url(input: string) {
 }
 
 async function secretKey() {
-  const secret = (env as any).AUTH_SECRET || "eco-delegues-local-auth-secret";
+  const secret = process.env.AUTH_SECRET || "eco-delegues-local-auth-secret";
   return crypto.subtle.importKey("raw", enc(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
 
@@ -53,9 +52,9 @@ export async function verifyPassword(password: string, stored: string | null) {
   return hex(digest) === expected;
 }
 
-export async function ensureAuthSchema() {
-  await env.DB.prepare("ALTER TABLE members ADD COLUMN password_hash TEXT").run().catch(() => null);
-  await env.DB.prepare("ALTER TABLE account_requests ADD COLUMN password_hash TEXT").run().catch(() => null);
+export async function ensureAuthSchema(db: any) {
+  await db.prepare("ALTER TABLE members ADD COLUMN password_hash TEXT").run().catch(() => null);
+  await db.prepare("ALTER TABLE account_requests ADD COLUMN password_hash TEXT").run().catch(() => null);
 }
 
 export async function createSession(user: LocalUser) {
