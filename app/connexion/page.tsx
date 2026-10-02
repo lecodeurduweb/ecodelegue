@@ -7,10 +7,32 @@ import { Toaster, toast } from "sonner";
 export default function ConnexionPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [password, setPassword] = useState("");
   const [schoolClass, setSchoolClass] = useState("");
   const [reason, setReason] = useState("");
   const [sent, setSent] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  async function login(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Connexion impossible");
+      location.href = "/";
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,13 +41,14 @@ export default function ConnexionPage() {
       const response = await fetch("/api/account-requests", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name, email, schoolClass, reason }),
+        body: JSON.stringify({ name, email, password, schoolClass, reason }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Demande impossible");
       setSent(true);
       setName("");
       setEmail("");
+      setPassword("");
       setSchoolClass("");
       setReason("");
     } catch (error: any) {
@@ -49,22 +72,22 @@ export default function ConnexionPage() {
         <div>
           <em>Espace collaboratif</em>
           <h1>
-            Connexion <mark>optionnelle</mark>
+            Accès <mark>approuvé</mark>
           </h1>
           <p>
-            Le site reste consultable en mode visiteur. La connexion sert
-            seulement à publier, importer des fichiers ou accéder aux outils
-            d'administration.
+            Le site est réservé aux comptes validés par un administrateur.
+            Chaque compte visible dans l'administration peut être vérifié,
+            accepté ou supprimé.
           </p>
         </div>
         <footer>
           <span>
-            <b>Public</b>
-            <small>Lire les projets et fichiers</small>
+            <b>0</b>
+            <small>Aucun accès visiteur</small>
           </span>
           <span>
-            <b>Membre</b>
-            <small>Créer et gérer du contenu</small>
+            <b>100%</b>
+            <small>Comptes vérifiés</small>
           </span>
         </footer>
       </section>
@@ -73,16 +96,22 @@ export default function ConnexionPage() {
           <span className="eyebrow">ACCÈS AU SITE</span>
           <h2>Se connecter</h2>
           <p>
-            Connecte-toi avec ChatGPT si ton compte a déjà été autorisé par un
-            administrateur.
+            Entre avec l'e-mail et le mot de passe d'un compte déjà approuvé.
           </p>
-          <a className="primary" href="/signin-with-chatgpt?return_to=/">
-            <LockKeyhole />
-            Se connecter avec ChatGPT
-          </a>
-          <a className="outline authlink" href="/">
-            Continuer en visiteur
-          </a>
+          <form onSubmit={login}>
+            <label>
+              Adresse e-mail
+              <input required type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
+            </label>
+            <label>
+              Mot de passe
+              <input required type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+            </label>
+            <button className="primary" disabled={saving}>
+              <LockKeyhole />
+              Se connecter
+            </button>
+          </form>
           <div className="or">OU</div>
           {sent ? (
             <div className="success">
@@ -110,6 +139,17 @@ export default function ConnexionPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="prenom.nom@email.fr"
+                />
+              </label>
+              <label>
+                Mot de passe souhaité
+                <input
+                  required
+                  minLength={8}
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="8 caractères minimum"
                 />
               </label>
               <label>
