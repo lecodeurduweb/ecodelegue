@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { createSession, ensureAuthSchema, verifyPassword } from "../../../local-auth";
 
 export async function POST(req: Request) {
-  await ensureAuthSchema();
+  await ensureAuthSchema(env.DB);
   const body: any = await req.json().catch(() => ({}));
   const email = String(body.email || "").trim().toLowerCase();
   const password = String(body.password || "");
