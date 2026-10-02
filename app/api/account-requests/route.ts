@@ -6,7 +6,7 @@ function clean(value: unknown) {
 }
 
 export async function POST(req: Request) {
-  await ensureAuthSchema();
+  await ensureAuthSchema(env.DB);
   const body: any = await req.json().catch(() => ({}));
   const name = clean(body.name);
   const email = clean(body.email).toLowerCase();
